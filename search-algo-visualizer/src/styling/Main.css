@@ -1,0 +1,16 @@
+.main-component {
+    background-color: lightgray;
+    height: 87.5vh;
+    width: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-box {
+    height: 87.5%;
+    width: 87.5%;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+}
