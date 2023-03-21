@@ -13,15 +13,21 @@ function App() {
   const numRows = 10;
   const numCols = 15;
 
-    const [start, setStart] = useState({set: false, loc: null})
-    const [final, setFinal] = useState({set: false, loc: null})
+    const [start, setStart] = useState({set: false, id: null})
+    const [final, setFinal] = useState({set: false, id: null})
+
+    async function delay(milliseconds) {
+      return new Promise(resolve => {
+          setTimeout(resolve, milliseconds);
+      });
+  }
     
     function createGrid() {
         let gridTest = []
         for (let i = 0; i < numRows; i++) {
             let row = []
             for (let j = 0; j < numCols; j++) {
-                row.push({id: `${i}+${j}`, visited: false, startLoc: false, finalLoc: false})
+                row.push({id: `${i}+${j}`, startLoc: false, finalLoc: false})
             }
             gridTest.push(row)
         }
@@ -29,34 +35,68 @@ function App() {
     }
 
     function resetGrid() {
-      setStart({set: false, loc: null})
-      setFinal({set: false, loc: null})
+      setStart({set: false, id: null, startLoc: false, finalLoc: false})
+      setFinal({set: false, id: null, startLoc: false, finalLoc: false})
       setGrid(createGrid())
     }
 
-    function breadthFirstSearch() {
-      if (start.loc == null || final.loc == null) {
+    async function breadthFirstSearch() {
+      if (start.id == null || final.id == null) {
         return
       }
-      console.log(start.loc)
-      let i = start.loc.split("+")[0]
-      let j = start.loc.split("+")[1]
-      console.log(`${i}+${j}`)
-      visited.push(start)
       queue.enqueue(start)
-      console.log(queue)
-      while (queue) {
+      while (!queue.isEmpty()) {
+        await delay(1000)
         let current = queue.dequeue()
-        console.log(current.id)
-        if (current.id === final.loc) {
+        console.log("current :", current.id)
+        console.log("current visited: ", visited)
+        console.log("in visited?", visited.includes(current))
+        let currentVisited = visited.find(obj => obj.id === current.id && obj.startLoc === current.startLoc && obj.finalLoc === current.finalLoc) !== undefined;
+        if (currentVisited) {
+          console.log("been here do nothing")
+        } else if (current.id === final.id) {
+          console.log("AT FINAL")
+          return
+        } else {
+          let nextMoves = computeMoves(current)
+          for (let move of nextMoves) { 
+            queue.enqueue(move)
+          }
+          visited.push(current)
+          changeSquare(current)
         }
       }
     }
 
-    function changeSquare(id) {
+    function computeMoves(curr) {
+      let i = parseInt(curr.id.split("+")[0])
+      let j = parseInt(curr.id.split("+")[1])
+      let nextMoves = []
+      if (i-1 >= 0) {
+        nextMoves.push({id: `${i-1}+${j}`, startLoc: false, finalLoc: false})
+      }
+      if (i+1 < numRows) {
+        nextMoves.push({id: `${i+1}+${j}`, startLoc: false, finalLoc: false})
+      }
+      if (j-1 >= 0) {
+        nextMoves.push({id: `${i}+${j-1}`, startLoc: false, finaLoc: false})
+      }
+      if (j+1 < numCols) {
+        nextMoves.push({id: `${i}+${j+1}`, startLoc: false, finalLoc: false})
+      }
+      return nextMoves
+    }
+
+   
+
+    function changeSquare(curr) {
+      // dont want to change the color of the start or final square
+      if (curr.startLoc || curr.finalLoc) {
+        return
+      }
       const updatedGrid = grid.map((row) => {
         return row.map( (element) => {
-            return element.id === id ? {...element, backgroundColor: "red"} : element
+            return element.id === curr.id ? {...element, backgroundColor: "red"} : element
         })
       })
       setGrid(updatedGrid)
@@ -77,7 +117,7 @@ function App() {
         // }
 
         if (!start.set) {
-          setStart({set: true, loc: id});
+          setStart({set: true, id: id, startLoc: true, finalLoc: false});
           console.log(id)
           const updatedGrid = grid.map((row) => {
               return row.map( (element) => {
@@ -88,8 +128,8 @@ function App() {
           return
       }
 
-        if (!final.set && id !== start.loc) {
-            setFinal({set: true, loc: id});
+        if (!final.set && id !== start.id) {
+            setFinal({set: true, id: id, startLoc: false, finalLoc: true});
             console.log(id)
             const updatedGrid = grid.map((row) => {
                 return row.map( (element) => {
@@ -107,7 +147,7 @@ function App() {
     
     const [grid, setGrid] = useState(createGrid())
 
-    const gridEls = grid.map( (row) => {
+    const gridEls = grid.map( (row, index) => {
         const rowEls = row.map( (element) => {
             return (
                 <div style={
@@ -127,7 +167,7 @@ function App() {
                 </div>
             );
         });
-        return <div style={{display: 'flex', flexWrap: 'wrap', flex: 1}}>{rowEls}</div>;
+        return <div style={{display: 'flex', flexWrap: 'wrap', flex: 1}} key={index}>{rowEls}</div>;
     });
 
   useEffect((() => window.alert("Hi there! Please click two spots on the grid.\n The first click will represent the start location of the search and the second click will represent the destination of the search.")), [])
