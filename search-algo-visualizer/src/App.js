@@ -13,8 +13,8 @@ function App() {
   const numRows = 10;
   const numCols = 15;
 
-    const [start, setStart] = useState({set: false, id: null})
-    const [final, setFinal] = useState({set: false, id: null})
+    const [start, setStart] = useState({set: false, startLoc: true, finalLoc: false, id: null})
+    const [final, setFinal] = useState({set: false, startLoc: false, finalLoc: true, id: null})
 
     async function delay(milliseconds) {
       return new Promise(resolve => {
@@ -91,12 +91,13 @@ function App() {
 
     function changeSquare(curr) {
       // dont want to change the color of the start or final square
+      let currentVisited = visited.find(obj => obj.id === curr.id && obj.startLoc === curr.startLoc && obj.finalLoc === curr.finalLoc) !== undefined;
       if (curr.startLoc || curr.finalLoc) {
         return
       }
       const updatedGrid = grid.map((row) => {
         return row.map( (element) => {
-            return element.id === curr.id ? {...element, backgroundColor: "red"} : element
+            return (element.id === curr.id) ? {...element, backgroundColor: "red"} : element
         })
       })
       setGrid(updatedGrid)
@@ -139,16 +140,14 @@ function App() {
             setGrid(updatedGrid)
             return
         }
-
-        
-        
-        
     }
     
     const [grid, setGrid] = useState(createGrid())
 
     const gridEls = grid.map( (row, index) => {
         const rowEls = row.map( (element) => {
+        let currentVisited = visited.find(obj => obj.id === element.id && obj.startLoc === element.startLoc && obj.finalLoc === element.finalLoc) !== undefined;
+
             return (
                 <div style={
                     {
@@ -157,7 +156,7 @@ function App() {
                         justifyContent: 'center',
                         alignItems: 'center',
                         borderStyle: 'solid',
-                        backgroundColor: element.backgroundColor || "white",
+                        backgroundColor: currentVisited ? "red" : element.backgroundColor || "white"
                     }
                 }
                     key={element.id}
