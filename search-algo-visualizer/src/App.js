@@ -1,33 +1,50 @@
 import './App.css';
 import {Toolbar} from './components/Toolbar'
 import {Main} from './components/Main'
-import {useEffect, useState} from 'react'
+import {useEffect, useState, useRef} from 'react'
 import Queue from "./data-structures/Queue"
-
 
 function App() {
 
-  let queue = new Queue();
-  let visited = []
+  // let queue = new Queue();
 
   const numRows = 10;
   const numCols = 15;
 
-    const [start, setStart] = useState({set: false, startLoc: true, finalLoc: false, id: null})
-    const [final, setFinal] = useState({set: false, startLoc: false, finalLoc: true, id: null})
+    const [start, setStart] = useState({startLoc: false, finalLoc: false, id: null, visited: false, solution: false})
+    const [final, setFinal] = useState({startLoc: false, finalLoc: false, id: null, visited: false, solution: false})
+    const [running, setRunning] = useState(false)
+    const [algoInProgress, setAlgoInProgress] = useState(false)
+    const [grid, setGrid] = useState(createGrid())
+
+    const runningRef = useRef(running)
+
+    console.log(grid)
 
     async function delay(milliseconds) {
       return new Promise(resolve => {
           setTimeout(resolve, milliseconds);
       });
   }
-    
+
+   // when 'running' state var changes
+   // either call bfs (true) or do nothing (false)
+
+   useEffect( () => {
+    runningRef.current = running
+    if (running) {
+      breadthFirstSearch()
+    } else {
+      return
+    }
+   }, [running])
+
     function createGrid() {
         let gridTest = []
         for (let i = 0; i < numRows; i++) {
             let row = []
             for (let j = 0; j < numCols; j++) {
-                row.push({id: `${i}+${j}`, startLoc: false, finalLoc: false})
+                row.push({id: `${i}+${j}`, startLoc: false, finalLoc: false, visited: false, solution: false})
             }
             gridTest.push(row)
         }
@@ -35,147 +52,109 @@ function App() {
     }
 
     function resetGrid() {
-      setStart({set: false, id: null, startLoc: false, finalLoc: false})
-      setFinal({set: false, id: null, startLoc: false, finalLoc: false})
+      setStart({id: null, startLoc: false, finalLoc: false, visited: false, solution: false})
+      setFinal({id: null, startLoc: false, finalLoc: false, visited: false, solution: false})
       setGrid(createGrid())
+      setRunning(false)
     }
-
-    async function breadthFirstSearch() {
-      if (start.id == null || final.id == null) {
-        return
-      }
-      queue.enqueue(start)
-      while (!queue.isEmpty()) {
-        await delay(1000)
-        let current = queue.dequeue()
-        console.log("current :", current.id)
-        console.log("current visited: ", visited)
-        console.log("in visited?", visited.includes(current))
-        let currentVisited = visited.find(obj => obj.id === current.id && obj.startLoc === current.startLoc && obj.finalLoc === current.finalLoc) !== undefined;
-        if (currentVisited) {
-          console.log("been here do nothing")
-        } else if (current.id === final.id) {
-          console.log("AT FINAL")
-          return
-        } else {
-          let nextMoves = computeMoves(current)
-          for (let move of nextMoves) { 
-            queue.enqueue(move)
-          }
-          visited.push(current)
-          changeSquare(current)
-        }
-      }
-    }
-
-    function computeMoves(curr) {
-      let i = parseInt(curr.id.split("+")[0])
-      let j = parseInt(curr.id.split("+")[1])
-      let nextMoves = []
-      if (i-1 >= 0) {
-        nextMoves.push({id: `${i-1}+${j}`, startLoc: false, finalLoc: false})
-      }
-      if (i+1 < numRows) {
-        nextMoves.push({id: `${i+1}+${j}`, startLoc: false, finalLoc: false})
-      }
-      if (j-1 >= 0) {
-        nextMoves.push({id: `${i}+${j-1}`, startLoc: false, finaLoc: false})
-      }
-      if (j+1 < numCols) {
-        nextMoves.push({id: `${i}+${j+1}`, startLoc: false, finalLoc: false})
-      }
-      return nextMoves
-    }
-
-   
-
-    function changeSquare(curr) {
-      // dont want to change the color of the start or final square
-      let currentVisited = visited.find(obj => obj.id === curr.id && obj.startLoc === curr.startLoc && obj.finalLoc === curr.finalLoc) !== undefined;
-      if (curr.startLoc || curr.finalLoc) {
-        return
-      }
-      const updatedGrid = grid.map((row) => {
-        return row.map( (element) => {
-            return (element.id === curr.id) ? {...element, backgroundColor: "red"} : element
-        })
-      })
-      setGrid(updatedGrid)
-    }
-
-    
 
     function toggle(id) {
-        // if (start.set && final.set) {
-        //     console.log(id)
-        //     const updatedGrid = grid.map((row) => {
-        //         return row.map( (element) => {
-        //             return element.id === id ? {...element, backgroundColor: "red"} : element
-        //         })
-        //     })
-        //     setGrid(updatedGrid)
-        //     return
-        // }
-
-        if (!start.set) {
-          setStart({set: true, id: id, startLoc: true, finalLoc: false});
-          console.log(id)
-          const updatedGrid = grid.map((row) => {
-              return row.map( (element) => {
-                  return element.id === id ? {...element, backgroundColor: "green", startLoc: true} : element
-              })
-          })
-          setGrid(updatedGrid)
-          return
+      if (!start.startLoc) {
+          // Set start location if not set yet
+          setStart({ ...start, startLoc: true, id });
+          // Update the corresponding grid element
+          setGrid((prevGrid) => {
+              return prevGrid.map(row => row.map(cell => cell.id === id ? { ...cell, startLoc: true } : cell));
+          });
+      } else if (!final.finalLoc) {
+          // Set final location if not set yet and not the same as the start location
+          if (id !== start.id) {
+              setFinal({ ...final, finalLoc: true, id });
+              // Update the corresponding grid element
+              setGrid((prevGrid) => {
+                  return prevGrid.map(row => row.map(cell => cell.id === id ? { ...cell, finalLoc: true } : cell));
+              });
+          }
       }
+      // If both start and final locations are set, you can choose to do nothing or reset them
+  }
+  async function breadthFirstSearch() {
+    const visited = []
+    console.log("here")
+    const queue = new Queue()
+    queue.enqueue([start])
+    while (queue && runningRef.current) {
 
-        if (!final.set && id !== start.id) {
-            setFinal({set: true, id: id, startLoc: false, finalLoc: true});
-            console.log(id)
-            const updatedGrid = grid.map((row) => {
-                return row.map( (element) => {
-                    return element.id === id ? {...element, backgroundColor: "blue", finalLoc: true} : element
-                })
-            })
-            setGrid(updatedGrid)
-            return
-        }
-    }
-    
-    const [grid, setGrid] = useState(createGrid())
+      // changing curr to path
 
-    const gridEls = grid.map( (row, index) => {
-        const rowEls = row.map( (element) => {
-        let currentVisited = visited.find(obj => obj.id === element.id && obj.startLoc === element.startLoc && obj.finalLoc === element.finalLoc) !== undefined;
-
-            return (
-                <div style={
-                    {
-                        display: 'flex',
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        borderStyle: 'solid',
-                        backgroundColor: currentVisited ? "red" : element.backgroundColor || "white"
-                    }
-                }
-                    key={element.id}
-                    onClick={() => toggle(element.id)}
-                >
-                    {element.id}
-                </div>
-            );
+      const path = queue.dequeue()
+      const curr = path[path.length-1]
+      console.log("running inside func" , runningRef.current)
+      if (curr.id === final.id) {
+        console.log("at end!");
+        setGrid((prevGrid) => {
+          return prevGrid.map((row) =>
+            row.map((cell) =>
+              path.some((step) => step.id === cell.id) ? { ...cell, solution: true } : cell
+            )
+          );
         });
-        return <div style={{display: 'flex', flexWrap: 'wrap', flex: 1}} key={index}>{rowEls}</div>;
-    });
+        console.log(path);
+        return;
+      
+      } else if (visited.includes(curr.id)) {
+        console.log("been here " + curr.id)
+      } else {
+        const nextMoves = computeMoves(curr)
+        await delay(100)
 
-  useEffect((() => window.alert("Hi there! Please click two spots on the grid.\n The first click will represent the start location of the search and the second click will represent the destination of the search.")), [])
+        console.log(curr.id)
+        visited.push(curr.id)
+        setGrid((prevGrid) => {
+          return prevGrid.map(row => row.map(cell => cell.id === curr.id ? { ...cell, visited: true } : cell));
+        });
+        for (let move of nextMoves) {
+          let newPath = [...path, move]
+          queue.enqueue(newPath)
+        }
+      }
+    }
+  }
+  function callSearchAlgo() {
+    setRunning(!running)
+    breadthFirstSearch()
+  }
 
+  function stopSearchAlgo() {
+    setRunning(false)
+  }
+
+      function computeMoves(curr) {
+        let i = parseInt(curr.id.split("+")[0])
+        let j = parseInt(curr.id.split("+")[1])
+        let nextMoves = []
+        if (i-1 >= 0) {
+          nextMoves.push({id: `${i-1}+${j}`, startLoc: false, finalLoc: false, visited: false, solution: false})
+        }
+        if (i+1 < numRows) {
+          nextMoves.push({id: `${i+1}+${j}`, startLoc: false, finalLoc: false, visited: false, solution: false})
+        }
+        if (j-1 >= 0) {
+          nextMoves.push({id: `${i}+${j-1}`, startLoc: false, finaLoc: false, visited: false, solution: false})
+        }
+        if (j+1 < numCols) {
+          nextMoves.push({id: `${i}+${j+1}`, startLoc: false, finalLoc: false, visited: false, solution: false})
+        }
+        return nextMoves
+    }
+
+
+  console.log("running outside function: ", runningRef.current)
 
   return (
     <div className="App">
-      <Toolbar resetGrid={resetGrid} startSearch={breadthFirstSearch} showSearch={start.set && final.set}/>
-      <Main gridEls={gridEls}/>
+      <Toolbar resetGrid={resetGrid} startSearch={callSearchAlgo} stopSearch={stopSearchAlgo} showSearch={start.startLoc && final.finalLoc && !running} showStop={running}/>
+      <Main grid={grid} setGrid={grid} toggle={toggle} start={start} setStart={setStart} final={final} setFinal={setFinal}/>
     </div>
   );
 }

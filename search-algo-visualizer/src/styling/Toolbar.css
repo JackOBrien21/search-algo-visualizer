@@ -3,11 +3,20 @@
     background-color: black;
     height: 12.5vh;
     display: flex;
+    padding-right: 25px;
 }
 
 .right-toolbar {
     display: flex;
-    justify-content: center;
+    justify-content: right;
+    align-items: center;
+    flex: 1;
+}
+
+.left-toolbar {
+    display: flex;
+    flex: 1;
+    justify-content: left;
     align-items: center;
 }
 

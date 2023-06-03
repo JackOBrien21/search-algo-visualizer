@@ -14,3 +14,19 @@
     display: flex;
     flex-direction: column;
 }
+
+.start {
+    background-color: blue;
+}
+
+.final {
+    background-color: red;
+}
+
+.visited {
+    background-color: green;
+}
+
+.solution {
+    background-color: aquamarine;
+}
