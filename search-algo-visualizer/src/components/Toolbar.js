@@ -7,6 +7,7 @@ export function Toolbar({setSelectedTab, resetGrid, ...props}) {
 
     const [algoTabs, setAlgoTabs] = React.useState(algorithms)
 
+    // chooses algorithm tab
     function selectTab(index) {
         // disallow changing algo during runtime
         if (props.showStop) {
