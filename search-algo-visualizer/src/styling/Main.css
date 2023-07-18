@@ -7,6 +7,13 @@
     justify-content: center;
 }
 
+.main {
+    background-color: lightgray;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
 .search-box {
     height: 87.5%;
     width: 87.5%;
@@ -29,4 +36,8 @@
 
 .solution {
     background-color: aquamarine;
+}
+
+.obstacle {
+    background-color: black;
 }

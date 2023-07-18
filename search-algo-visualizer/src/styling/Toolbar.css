@@ -8,7 +8,6 @@
 
 .right-toolbar {
     display: flex;
-    justify-content: right;
     align-items: center;
     flex: 1;
 }
@@ -20,8 +19,32 @@
     align-items: center;
 }
 
+.algorithms {
+    display: flex;
+    justify-content: space-around;
+    flex: 3;
+}
+
 .reset-button {
     margin-left: 10px;
     display: flex;
+    flex: 1;
     margin-right: 10px;
+}
+
+.square-type {
+    display: flex;
+    justify-content: right;
+    flex: 1;
+}
+
+.search-buttons {
+    margin-right: 2vh;
+    flex: 1.2;
+    justify-content: right;
+}
+
+.search--button {
+    display: flex;
+    justify-content: right;
 }
