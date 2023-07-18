@@ -22,6 +22,8 @@ export function Toolbar({setSelectedTab, resetGrid, ...props}) {
 
     function handleResetGrid() {
         resetGrid()
+        props.setRunning(false)
+        props.setFinished(false)
         setAlgoTabs((prevAlgoTabs) => {
             return prevAlgoTabs.map((algoTab) => {
                 return {...algoTab, isSelectedTab: false}
@@ -46,7 +48,6 @@ export function Toolbar({setSelectedTab, resetGrid, ...props}) {
         return <div className="algo" key={index} style={styles} onClick={ () => selectTab(index)}>{algo.name}</div>
     })
 
-    console.log(props.selectedTab)
 
     return (
         <div className="toolbar-component">
@@ -59,12 +60,12 @@ export function Toolbar({setSelectedTab, resetGrid, ...props}) {
                 </div>
             </div>
             <div className="right-toolbar">
-                <div className="square-type">
-                    Obstacle
+                <div className="square-type" onClick={props.handleObstacleChange}>
+                    {props.obstacleMode ? "Creating Obstacles" : "Removing Obstacles"} | Click to change setting
                 </div>
                 <div className="search-buttons">
                     {(!allNotSelected || props.showStop) && props.showSearch && <div className="search--button" onClick={props.handleSearch}> Search! </div>}
-                    {props.showStop && <div className="stop--button" onClick={props.handleStop}> Stop! </div>}
+                    {props.showStop && <div className="search--button" onClick={props.handleStop}> Stop! </div>}
                 </div>
             </div>
         </div>

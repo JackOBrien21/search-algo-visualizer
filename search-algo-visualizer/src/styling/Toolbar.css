@@ -38,6 +38,10 @@
     flex: 1;
 }
 
+.square-type:hover {
+    cursor: pointer;
+}
+
 .search-buttons {
     margin-right: 2vh;
     flex: 1.2;

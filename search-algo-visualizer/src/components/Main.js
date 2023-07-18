@@ -6,7 +6,7 @@ export function Main(props) {
     function renderGrid() {
         return props.grid.map((row, rowIndex) => {
             return (
-                <div key={rowIndex} style={{display: 'flex', flex: '1'}}>
+                <div ref={props.gridWidthRef} key={rowIndex} style={{display: 'flex', flex: '1'}}>
                     {row.map((element, colIndex) => (
                         <div
                             style={{
@@ -16,12 +16,12 @@ export function Main(props) {
                                 alignItems: 'center',
                                 borderStyle: 'solid',
                             }}
-                            className={element.solution ? 'solution' : element.startLoc ? 'start' : element.finalLoc ? 'final' : element.visited ? 'visited' : 'unvisited'}
+                            className={element.solution ? 'solution' : element.obstacle ? 'obstacle' : element.startLoc ? 'start' : element.finalLoc ? 'final' : element.visited ? 'visited' : 'unvisited'}
 
                             key={element.id}
                             onClick={() => props.toggle(element.id)}
                         >
-                            {element.id}
+                            {/* {element.id} */}
                         </div>
                     ))}
                 </div>

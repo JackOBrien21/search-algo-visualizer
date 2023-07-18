@@ -9,25 +9,45 @@ function App() {
 
   // let queue = new Queue();
 
-  const numRows = 10;
-  const numCols = 15;
+
+    const numRows = 20;
+    const numCols = 30
 
     const [start, setStart] = useState({startLoc: false, finalLoc: false, id: null, visited: false, solution: false})
     const [final, setFinal] = useState({startLoc: false, finalLoc: false, id: null, visited: false, solution: false})
     const [selectedTab, setSelectedTab] = useState(-1)
     const [running, setRunning] = useState(false)
+    const [finished, setFinished] = useState(false)
     const [grid, setGrid] = useState(createGrid())
     const [obstacleMode, setObstacleMode] = useState(false)
-
+    const [gridWidth, setGridWidth] = useState(0)
+    const gridWidthRef = useRef(null)
     const runningRef = useRef(running)
+    const finishedRef = useRef(finished)
+    
+;
 
+
+    /*CAN BE USED LATER IF NEED WIDTH OF SCREEN TO DYNAMICALLY CREATE GRID*/
+    /*
+    const updateSize = () => {
+      setGridWidth(gridWidthRef.current.offsetWidth)
+    }
+
+    useEffect( () => {
+      updateSize()
+      window.addEventListener('resize', updateSize)
+
+      return () => window.removeEventListener('resize', updateSize)
+    })
+    */
 
     async function delay(milliseconds) {
       return new Promise(resolve => {
           setTimeout(resolve, milliseconds);
       });
   }
-
+  
    // when 'running' state var changes
    // either call bfs (true) or do nothing (false)
 
@@ -45,6 +65,11 @@ function App() {
       return;
     }
   }, [running, selectedTab]); // Added selectedTab as a dependency
+
+
+    useEffect( () => {
+      finishedRef.current = finished
+    }, [grid])
 
     function createGrid() {
         let gridTest = []
@@ -64,9 +89,13 @@ function App() {
       setGrid(createGrid())
       setRunning(false)
       setSelectedTab(-1)
+      setObstacleMode(false)
     }
 
     function toggle(id) {
+      if (runningRef.current) {
+        return
+      }
       if (!start.startLoc) {
           // Set start location if not set yet
           setStart({ ...start, startLoc: true, id });
@@ -83,9 +112,24 @@ function App() {
                   return prevGrid.map(row => row.map(cell => cell.id === id ? { ...cell, finalLoc: true } : cell));
               });
           }
+      } else if (obstacleMode) {
+        if (id !== start.id && id !== final.id)
+          // Anything but start and final can be obstacles
+          setGrid((prevGrid) => {
+            return prevGrid.map(row => row.map(cell => cell.id === id ? {...cell, obstacle: true} : cell))
+          })
+      } else if (!obstacleMode && checkObstacle(id)) {
+        // only want to iterate over grid to change square if it is actually an obstacle
+        // prevents a lot of unncessary work from being done by extra clicks
+        setGrid((prevGrid) => {
+          return prevGrid.map(row => row.map(cell => cell.id === id ? {...cell, obstacle: false} : cell))
+        })
       }
+    }
+
+      
       // If both start and final locations are set, you can choose to do nothing or reset them
-  }
+  
   async function breadthFirstSearch() {
     const visited = []
     const queue = new Queue()
@@ -96,17 +140,25 @@ function App() {
 
       const path = queue.dequeue()
       const curr = path[path.length-1]
+      if (checkObstacle(curr.id)) {
+        continue
+      }
       if (curr.id === final.id) {
+        setRunning(false)
+        setFinished(true)
         setGrid((prevGrid) => {
           return prevGrid.map((row) =>
             row.map((cell) =>
               path.some((step) => step.id === cell.id) ? { ...cell, solution: true } : cell
             )
-          );
-        });
+          )
+        })
+        
+      
         return;
       
       } else if (visited.includes(curr.id)) {
+        continue
       } else {
         const nextMoves = computeMoves(curr)
         await delay(100)
@@ -121,6 +173,9 @@ function App() {
         }
       }
     }
+    setRunning(false)
+    setFinished(true)
+  
   }
 
   // async function depthFirstSearch() {
@@ -141,6 +196,9 @@ function App() {
     while (stack.length && runningRef.current) {
         let currPath = stack.pop();
         let currNode = currPath[currPath.length - 1];
+        if (checkObstacle(currNode.id)) {
+          continue
+        }
         if (!visited.has(currNode.id)) {
             visited.add(currNode.id);
             setGrid((prevGrid) => {
@@ -166,6 +224,7 @@ function App() {
                 );
             });
             setRunning(false);
+            setFinished(true)
             return;
         }
     }
@@ -183,6 +242,9 @@ async function AStarSearch() {
   openList.push(startNode)
   while (!openList.isEmpty() && runningRef.current) {
     const currNode = openList.pop()
+    if (checkObstacle(currNode.id)) {
+      continue
+    }
     if (visited.has(currNode.id)) {
       continue
     } 
@@ -201,6 +263,8 @@ async function AStarSearch() {
           )
         );
       });
+      setFinished(true)
+      setRunning(false)
       return;
     } 
     else {
@@ -220,6 +284,8 @@ async function AStarSearch() {
       }
     }
   }
+  setRunning(false)
+  setFinished(true)
 }
 
 
@@ -231,6 +297,13 @@ async function AStarSearch() {
     let final_i = parseInt(final.id.split("+")[0])
     let final_j = parseInt(final.id.split("+")[1])
     return Math.abs(curr_i - final_i) + Math.abs(curr_j - final_j)
+  }
+
+  // given an id, checks if it is an obstacle
+  function checkObstacle(id) {
+      let curr_i = parseInt(id.split("+")[0])
+      let curr_j = parseInt(id.split("+")[1])
+      return grid[curr_i][curr_j].obstacle
   }
 
 
@@ -266,12 +339,21 @@ async function AStarSearch() {
     })
 }
 
+  function handleObstacleChange() {
+    setObstacleMode(obstacleMode => !obstacleMode)
+  }
 
+  console.log(gridWidth)
+
+  function handlePrint() {
+    console.log("Running: ", runningRef.current)
+    console.log("Finished: ", finishedRef.current)
+  }
 
   return (
-    <div className="App">
-      <Toolbar handleSearch={handleAlgoFunctionCall} handleStop={stopSearchAlgo} showStop={running} selectedTab={selectedTab} setSelectedTab={setSelectedTab} resetGrid={resetGrid} stopSearch={stopSearchAlgo} showSearch={start.startLoc && final.finalLoc && !running}/>
-      <div className="main">
+    <div className="App" onClick={handlePrint}>
+      <Toolbar obstacleMode={obstacleMode} handleObstacleChange={handleObstacleChange} handleSearch={handleAlgoFunctionCall} handleStop={stopSearchAlgo} showStop={running && !finished} selectedTab={selectedTab} setSelectedTab={setSelectedTab} resetGrid={resetGrid} stopSearch={stopSearchAlgo} showSearch={start.startLoc && final.finalLoc && !running && !finished} setRunning={setRunning} setFinished={setFinished}/>
+      <div ref={gridWidthRef} className="main">
         <Main grid={grid} setGrid={grid} toggle={toggle} start={start} setStart={setStart} final={final} setFinal={setFinal}/>
       </div>
     </div>
